@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ViewTransitionLink from '@/components/view-transition-link'
 import { Project } from '@/lib/content'
 
 // Unique gradient + icon per project
@@ -35,12 +36,14 @@ export default function ProjectCard({ project }: { project: Project }) {
   const visual = PROJECT_VISUALS[project.slug] ?? DEFAULT_VISUAL
 
   return (
-    <Link href={`/projects/${project.slug}`} className="group block h-full">
+    <div className="group h-full visual-card">
       <div className="glow-card rounded-2xl overflow-hidden h-full flex flex-col">
 
         {/* Visual header */}
         <div className={`relative h-36 bg-gradient-to-br ${visual.gradient} flex items-center justify-center overflow-hidden`}>
+          <div className="visual-card__halo" aria-hidden />
           <div className="absolute inset-0 dot-bg opacity-30" />
+          <div className="visual-card__scan" aria-hidden />
           <div className="relative text-5xl group-hover:scale-110 transition-transform duration-300">
             {visual.icon}
           </div>
@@ -64,9 +67,15 @@ export default function ProjectCard({ project }: { project: Project }) {
 
         {/* Content */}
         <div className="p-5 flex flex-col flex-1">
-          <h3 className="text-base font-semibold text-white mb-1 group-hover:text-cyan-400 transition-colors">
-            {project.title}
-          </h3>
+          <ViewTransitionLink
+            href={`/projects/${project.slug}`}
+            transitionName={`project-title-${project.slug}`}
+            className="block"
+          >
+            <h3 className="text-base font-semibold text-white mb-1 group-hover:text-cyan-400 transition-colors">
+              {project.title}
+            </h3>
+          </ViewTransitionLink>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed flex-1">
             {project.subtitle}
           </p>
@@ -83,8 +92,34 @@ export default function ProjectCard({ project }: { project: Project }) {
               </span>
             )}
           </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <ViewTransitionLink
+              href={`/projects/${project.slug}`}
+              className="magnetic-button inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-white hover:border-white/20 hover:bg-white/7 transition-all"
+            >
+              Case Study
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />
+              </svg>
+            </ViewTransitionLink>
+
+            {project.demoUrl && (
+              <a
+                href={project.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="magnetic-button inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-400/12 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-400/18 hover:border-cyan-300/40 transition-all"
+              >
+                Live Demo
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />
+                </svg>
+              </a>
+            )}
+          </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
