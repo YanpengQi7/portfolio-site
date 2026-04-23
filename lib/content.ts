@@ -10,12 +10,47 @@ export interface Project {
   status: string
   year: number
   featured: boolean
+  demoUrl?: string
   contentHtml: string
+}
+
+export interface BlogPost {
+  slug: string
+  title: string
+  subtitle: string
+  date: string
+  readingTime: string
+  tags: string[]
+  featured: boolean
+  contentHtml: string
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 // Simple markdown to HTML (no extra deps needed for basic formatting)
 function markdownToHtml(markdown: string): string {
-  return markdown
+  const codeBlocks: string[] = []
+
+  const html = markdown
+    .replace(/```([\w-]+)?\n([\s\S]*?)```/g, (_, language: string | undefined, code: string) => {
+      const block = [
+        '<pre class="code-block"><code>',
+        language ? `<span class="code-language">${escapeHtml(language)}</span>` : '',
+        escapeHtml(code.trimEnd()),
+        '</code></pre>',
+      ].join('')
+
+      const token = `__CODE_BLOCK_${codeBlocks.length}__`
+      codeBlocks.push(block)
+      return token
+    })
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-8 mb-3">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-8 mb-4">$1</h1>')
@@ -27,6 +62,13 @@ function markdownToHtml(markdown: string): string {
     .replace(/\n\n/g, '</p><p class="mb-4">')
     .replace(/^(?!<[hul])(.+)$/gm, '<p class="mb-4">$1</p>')
     .replace(/<p class="mb-4"><\/p>/g, '')
+
+  return html.replace(/<p class="mb-4">(__CODE_BLOCK_\d+__)<\/p>|(__CODE_BLOCK_\d+__)/g, (_, tokenA: string | undefined, tokenB: string | undefined) => {
+    const token = tokenA ?? tokenB
+    if (!token) return ''
+    const index = Number(token.replace('__CODE_BLOCK_', '').replace('__', ''))
+    return codeBlocks[index] ?? ''
+  })
 }
 
 export async function getAllProjects(): Promise<Project[]> {
@@ -50,6 +92,36 @@ export async function getProject(slug: string): Promise<Project | null> {
       tech: data.tech || [],
       status: data.status || 'Completed',
       year: data.year || 2024,
+      featured: data.featured || false,
+      demoUrl: data.demoUrl,
+      contentHtml: markdownToHtml(content),
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function getAllBlogPosts(): Promise<BlogPost[]> {
+  const dir = path.join(process.cwd(), 'content', 'blog')
+  const files = await readdir(dir)
+  const posts = await Promise.all(
+    files.filter(f => f.endsWith('.md')).map(f => getBlogPost(f.replace('.md', '')))
+  )
+  return (posts.filter(Boolean) as BlogPost[]).sort((a, b) => b.date.localeCompare(a.date))
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  try {
+    const filePath = path.join(process.cwd(), 'content', 'blog', `${slug}.md`)
+    const raw = await readFile(filePath, 'utf-8')
+    const { data, content } = matter(raw)
+    return {
+      slug: data.slug || slug,
+      title: data.title,
+      subtitle: data.subtitle,
+      date: typeof data.date === 'string' ? data.date : new Date(data.date).toISOString().slice(0, 10),
+      readingTime: data.readingTime || '5 min read',
+      tags: data.tags || [],
       featured: data.featured || false,
       contentHtml: markdownToHtml(content),
     }

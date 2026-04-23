@@ -106,7 +106,7 @@ Phase 4 — 加分项（可选）
   [ ] Groq fallback
   [ ] 向量版 RAG（embedding + cosine）
   [ ] 简历 PDF 下载
-  [ ] /api/chat 的 conversation 存 Vercel KV（演示有状态）
+  [x] /api/chat 的 conversation 存 Vercel KV（演示有状态）
 ```
 
 ---
@@ -118,6 +118,8 @@ GOOGLE_GENERATIVE_AI_API_KEY=...    # https://aistudio.google.com/apikey
 GROQ_API_KEY=...                    # 可选，fallback
 UPSTASH_REDIS_REST_URL=...          # 可选，rate limit
 UPSTASH_REDIS_REST_TOKEN=...
+KV_REST_API_URL=...                 # 可选，conversation persistence
+KV_REST_API_TOKEN=...
 ```
 
 都用 `vercel env` 管理。

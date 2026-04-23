@@ -56,7 +56,7 @@
 - [x] **Shimmer Logo**：`YQ` 彩虹渐变扫光动画
 - [x] **Hero 标题**：渐变文字（青→紫→粉）
 - [x] **浮动头像卡片**：发光圆环 + 3个角标（RAG / Multi-Agent / AWS），`float` 动画
-- [x] **Stats 行**：4块数据卡（4+ 年 / 1M+ 用户 / 54% 降本 / 92% 精准率），fade-up 动画
+- [x] **Stats 行**：4块数据卡（5 年 SDE / 1M+ 用户 / 54% 降本 / 92% 精准率），fade-up 动画
 - [x] **项目卡片**：每个项目独立渐变头图 + Emoji，hover 发光 + 箭头动画
 - [x] **终端风格预览区**：首页底部展示 chat 效果
 - [x] **Chat UI**：玻璃气泡、青色送出按钮、带 emoji 的建议问题
@@ -139,7 +139,8 @@ portfolio-site/
 ## 待完成（优先级排序）
 
 ### 🔴 P0 — 安全
-- [ ] **Upstash Rate Limit** — 按 IP 限流（5次/分钟），防止 API quota 被打空
+- [x] **Upstash Rate Limit** — 按 IP 限流（5次/分钟），防止 API quota 被打空
+  - 代码已接入 `/api/chat`；补齐环境变量后即可在本地/Vercel 生效
   - 申请：https://upstash.com（免费 tier）
   - 需要环境变量：`UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
 
@@ -151,6 +152,6 @@ portfolio-site/
 
 ### 🟢 P2 — 实用
 - [ ] **简历 PDF 下载** — 把 `Yanpeng Qi_resume.pdf` 放入 `public/`，首页加下载按钮
-- [ ] **Vercel Analytics** — 一行代码，免费，能看访客数据
+- [x] **Vercel Analytics** — 一行代码，免费，能看访客数据
 - [ ] **OG Image** — 社交分享预览图（LinkedIn / 微信）
 - [ ] **自定义域名** — 在 Vercel Dashboard 绑定（如 `yanpengqi.dev`）

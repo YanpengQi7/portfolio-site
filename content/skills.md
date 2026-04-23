@@ -19,21 +19,28 @@ Java, Python, TypeScript, JavaScript, SQL, HTML/CSS, Shell, C++
 - Embedding-based clustering and similarity search (ChromaDB, pgvector)
 - MCP (Model Context Protocol) server development
 - Amazon Bedrock integration
+- AI code review assistants in CI/CD pipelines
+- Semantic chunking, similarity thresholds, and embedding-driven retrieval systems
 
 ## Frontend
-- Next.js App Router, React Server Components, React Native
-- TypeScript (strict mode), Redux
+- Next.js App Router, React Server Components, React, React Native
+- TypeScript (strict mode), JavaScript, Redux
 - Tailwind CSS, shadcn/ui
 - Vercel AI SDK streaming UI
+- HTML/CSS, responsive UI architecture
 
 ## Backend
-- Node.js / TypeScript, Spring Boot, FastAPI (Python)
+- Java + Spring Boot, Node.js / TypeScript, FastAPI (Python)
 - PostgreSQL, MongoDB, DynamoDB, Redis
 - Supabase (Postgres + pgvector + RLS + Auth + Storage)
-- RESTful APIs, async job orchestration, SSE streaming
+- RESTful APIs, config-driven rule engines, async job orchestration, SSE streaming
+- Identity-aware microservices, cross-account access control, JSON-driven workflow routing
 
 ## Cloud & DevOps
 - AWS: Lambda, API Gateway, CloudWatch, ECS, Fargate, Bedrock
+- Kubernetes fundamentals: deployments, services, autoscaling, workload isolation
+- Docker, CI/CD automation, observability and alerting
+- Serverless and container-based service deployment
 - Docker, GitHub Actions, Vercel (Hobby & Pro)
 - Nginx, Ubuntu VPS
 

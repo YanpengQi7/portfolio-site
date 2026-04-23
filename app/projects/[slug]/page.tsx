@@ -65,8 +65,37 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               </span>
             )}
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3">{project.title}</h1>
+          <h1
+            className="text-4xl font-bold text-white mb-3"
+            style={{ viewTransitionName: `project-title-${slug}` }}
+          >
+            {project.title}
+          </h1>
           <p className="text-xl text-muted-foreground mb-6">{project.subtitle}</p>
+          <div className="flex flex-wrap gap-3 mb-6">
+            {project.demoUrl && (
+              <a
+                href={project.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants({ variant: 'default' }),
+                  'bg-cyan-500 hover:bg-cyan-400 text-black font-semibold shadow-lg shadow-cyan-500/20',
+                )}
+              >
+                Live Demo
+              </a>
+            )}
+            <Link
+              href="/chat"
+              className={cn(
+                buttonVariants({ variant: 'outline' }),
+                'border-white/10 hover:border-white/30 hover:bg-white/5',
+              )}
+            >
+              Ask About This Project
+            </Link>
+          </div>
           <div className="flex flex-wrap gap-2">
             {project.tech.map((t: string) => (
               <span key={t}

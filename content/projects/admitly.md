@@ -6,6 +6,7 @@ tech: [Next.js, Claude, RAG, pgvector, Multi-Agent, Supabase, TypeScript]
 status: In Development
 year: 2025
 featured: true
+demoUrl: https://admitly-smoky.vercel.app/
 ---
 
 # Admitly — AI-Powered Graduate Admission Copilot
