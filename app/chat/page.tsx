@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useChat } from '@ai-sdk/react'
-import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useRef, useEffect, useState } from 'react'
 
@@ -11,9 +11,20 @@ const SUGGESTIONS = [
   "What AI projects has Yanpeng built?",
   "How does the RAG pipeline in Admitly work?",
   "What's Yanpeng's tech stack?",
-  "Tell me about the auto-apply Chrome extension",
+  "Tell me about the AI Financial Intelligence Agent",
+  "What has Yanpeng done at Amazon?",
   "What makes Yanpeng a good hire?",
 ]
+
+type TextPart = { type: 'text'; text: string }
+
+function getTextFromMessage(parts: unknown): string {
+  if (!Array.isArray(parts)) return ''
+  return (parts as TextPart[])
+    .filter(p => p.type === 'text')
+    .map(p => p.text)
+    .join('')
+}
 
 export default function ChatPage() {
   const { messages, sendMessage, status } = useChat()
@@ -25,11 +36,16 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const submit = () => {
+    const text = input.trim()
+    if (!text || isLoading) return
+    sendMessage({ text })
+    setInput('')
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
-    sendMessage({ text: input })
-    setInput('')
+    submit()
   }
 
   const handleSuggestion = (text: string) => {
@@ -50,14 +66,16 @@ export default function ChatPage() {
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-8 flex flex-col">
         <Link href="/" className={cn(buttonVariants({ variant: 'ghost' }), 'mb-6 -ml-2 self-start gap-1')}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Back
         </Link>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Ask me anything</h1>
           <p className="text-muted-foreground">
-            AI chatbot trained on my resume & projects. Powered by Gemini Flash + RAG.
+            AI chatbot trained on my resume &amp; projects. Powered by Gemini Flash + RAG.
           </p>
         </div>
 
@@ -79,16 +97,15 @@ export default function ChatPage() {
           )}
 
           {messages.map(m => {
-            const textContent = m.parts
-              .filter((p): p is { type: 'text'; text: string; state?: 'streaming' | 'done' } => p.type === 'text')
-              .map(p => p.text)
-              .join('')
-
+            const text = getTextFromMessage(m.parts)
+            if (!text && m.role === 'assistant') return null
             return (
               <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" /></svg>
+                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
+                    </svg>
                   </div>
                 )}
                 <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
@@ -96,21 +113,25 @@ export default function ChatPage() {
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground'
                 }`}>
-                  {textContent}
+                  {text}
                 </div>
                 {m.role === 'user' && (
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                   </div>
                 )}
               </div>
             )
           })}
 
-          {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+          {isLoading && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" /></svg>
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
+                </svg>
               </div>
               <div className="bg-muted rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
@@ -129,12 +150,15 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
             placeholder="Ask about my projects, skills, or experience..."
             className="flex-1 rounded-lg border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="rounded-lg h-12 w-12">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
           </Button>
         </form>
         <p className="text-xs text-muted-foreground mt-2 text-center">

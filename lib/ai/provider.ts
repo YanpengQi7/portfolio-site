@@ -9,7 +9,7 @@ export async function createProviderWithFallback(): Promise<{ model: LanguageMod
   if (googleKey) {
     try {
       const google = createGoogleGenerativeAI({ apiKey: googleKey })
-      return { model: google('gemini-2.0-flash') as LanguageModel, provider: 'google' }
+      return { model: google('gemini-2.5-flash') as LanguageModel, provider: 'google' }
     } catch {
       console.warn('[AI] Google provider failed, falling back to Groq')
     }
