@@ -1,6 +1,6 @@
 # Portfolio Site — 进度记录
 
-> 最后更新：2026-04-23
+> 最后更新：2026-04-23（+ 实时 RAG 可视化 & View Transitions）
 
 ---
 
@@ -64,6 +64,67 @@
 - [x] CSS 动画库：`fade-up` / `fade-in` / `float` / `glow-pulse` / `shimmer` / `slide-left`，支持 `delay-*` 错落
 - [x] **页面 Title/描述**更新为真实信息（移除默认 "Create Next App"）
 - [x] **prose-custom** 样式：项目详情页 Markdown 渲染（h1/h2/h3、strong、code、list）
+
+---
+
+## 🆕 本次会话改动（2026-04-23 晚）
+
+> 主题：**「用 Claude design 把站点变得更酷」**
+> 两个 commit 已推送到 `main`：`58438ad` + `d3e83ee`
+
+### 1. 实时 RAG 可视化（Live RAG Visualization）
+
+把 `/chat` 里原本黑盒的检索步骤变成可视化演示。每条 AI 回答下面多了一个
+「**RAG · N chunks retrieved**」折叠面板，点开能看到 LLM 实际看到的原始内容。
+
+**改动文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `lib/ai/retrieval.ts` | 新增 `retrieveRag()`，返回 `{context, chunks, fallback}`；保留旧 `retrieveContext()` 兼容 |
+| `app/api/chat/route.ts` | 调用 `retrieveRag()`，通过 AI SDK v6 的 `messageMetadata` 回调在 `start` part 注入 chunk 预览（source + kind + score + snippet） |
+| `lib/ai/conversation-store.ts` | `SaveConversationInput` 新增 `ragChunks` 字段，持久化到 Upstash |
+| `app/chat/page.tsx` | 新增 `<RagPanel>` 组件：折叠按钮 + 按 kind 配色的 chunk 卡片（project 紫 / profile 青 / skills 绿 / blog 琥珀）+ 归一化得分进度条（青→紫渐变）+ 260 字符 snippet 预览；检测 `m.metadata.rag` 自动渲染 |
+
+**可视化内容：**
+- Source 文件名（monospace，例如 `projects/admitly.md`）
+- Chunk kind（带颜色标签）
+- 关键词匹配得分 + 相对百分比进度条
+- 原始文本片段（最多 260 字符，`line-clamp-4`）
+- `fallback` 标签：当无强匹配、使用全量 corpus 时显示
+
+**技术亮点：**
+用的是 AI SDK v6 的 `messageMetadata({part})` 回调，在 `part.type === 'start'`
+时返回元数据，走在同一个 SSE 流里，无需额外请求。
+
+### 2. View Transitions（路由跳转动画）
+
+**改动文件：**
+
+| 文件 | 改动 |
+|------|------|
+| `components/view-transition-link.tsx` | **新增**。包装 `next/link`，拦截 click 调用 `document.startViewTransition`；支持 `transitionName` prop 做 shared-element morph；非支持浏览器（Firefox）自动降级为普通 Link |
+| `components/project-card.tsx` | 项目标题 `<h3>` + 「Case Study」按钮改用 `<ViewTransitionLink>`；标题传 `transitionName={\`project-title-${slug}\`}` |
+| `app/projects/[slug]/page.tsx` | 详情页 `<h1>` 加上匹配的 `style={{viewTransitionName: \`project-title-${slug}\`}}` — 从卡片 morph 到详情页标题 |
+| `app/globals.css` | 新增 `::view-transition-old/new(root)` 关键帧：360ms cross-fade + Y 轴微滑动；shared-element 标题 morph 500ms；`prefers-reduced-motion` 守卫 |
+
+**效果：**
+- 任何卡片/按钮点击跳转：全页 cross-fade + 轻微下滑（不是硬切）
+- 从 `/projects` 点卡片进详情页：项目标题会**平滑放大移动**到详情页的大标题位置
+- 零新依赖，零 Next 实验性 flag
+
+### 3. 文档更新
+- `PROGRESS.md`（本文件）新增本小节
+
+### Commit 记录
+```
+d3e83ee feat: live RAG visualization in chat + View Transitions for project routes
+58438ad feat: blog, CV page, repositories, theme toggle, analytics, rate limit
+```
+
+### 为什么这两个改动对「作品集」有价值
+- **RAG 可视化**：招聘方看到的是「AI 说了什么」，现在还能看到「AI 为什么这么说」——把系统的工程细节暴露给面试官，直接当 demo 用
+- **View Transitions**：零依赖展示对 Web 新标准的掌握（Next.js 16 + React 19.2 + 浏览器原生 API），比 Framer Motion 更「浏览器原生」的加分项
 
 ---
 
