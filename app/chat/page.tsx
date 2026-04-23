@@ -8,12 +8,11 @@ import { cn } from '@/lib/utils'
 import { useRef, useEffect, useState } from 'react'
 
 const SUGGESTIONS = [
-  "What AI projects has Yanpeng built?",
-  "How does the RAG pipeline in Admitly work?",
-  "What's Yanpeng's tech stack?",
-  "Tell me about the AI Financial Intelligence Agent",
-  "What has Yanpeng done at Amazon?",
-  "What makes Yanpeng a good hire?",
+  { text: "What AI projects has Yanpeng built?", icon: "🤖" },
+  { text: "How does the RAG pipeline in Admitly work?", icon: "🔍" },
+  { text: "What has Yanpeng done at Amazon?", icon: "☁️" },
+  { text: "Tell me about the AI Financial Agent", icon: "📈" },
+  { text: "What makes Yanpeng a strong hire?", icon: "⚡" },
 ]
 
 type TextPart = { type: 'text'; text: string }
@@ -30,6 +29,7 @@ export default function ChatPage() {
   const { messages, sendMessage, status } = useChat()
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const isLoading = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
@@ -43,127 +43,135 @@ export default function ChatPage() {
     setInput('')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    submit()
-  }
-
-  const handleSuggestion = (text: string) => {
-    if (isLoading) return
-    sendMessage({ text })
-  }
-
   return (
-    <main className="min-h-screen bg-background flex flex-col">
+    <main className="h-screen bg-background flex flex-col overflow-hidden">
+
+      {/* Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full animate-glow"
+          style={{ background: 'radial-gradient(circle, oklch(0.72 0.18 210 / 8%) 0%, transparent 70%)' }} />
+        <div className="absolute inset-0 dot-bg opacity-15" />
+      </div>
+
       {/* Nav */}
-      <nav className="border-b px-6 py-4 flex items-center justify-between max-w-5xl mx-auto w-full">
-        <span className="font-semibold text-lg">Yanpeng Qi</span>
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-          <Link href="/projects" className="hover:text-foreground transition-colors">Projects</Link>
+      <nav className="relative z-50 border-b border-white/5 backdrop-blur-md bg-background/60 flex-shrink-0">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="font-bold text-lg shimmer-text">YQ</Link>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground glass px-3 py-1.5 rounded-full border border-white/5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            Gemini 2.5 Flash · RAG
+          </div>
         </div>
       </nav>
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-8 flex flex-col">
-        <Link href="/" className={cn(buttonVariants({ variant: 'ghost' }), 'mb-6 -ml-2 self-start gap-1')}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </Link>
+      {/* Chat area */}
+      <div className="relative flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-8">
 
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Ask me anything</h1>
-          <p className="text-muted-foreground">
-            AI chatbot trained on my resume &amp; projects. Powered by Gemini Flash + RAG.
+          {/* Empty state */}
+          {messages.length === 0 && (
+            <div className="animate-fade-up text-center mb-10">
+              <div className="text-4xl mb-4 animate-float inline-block">🤖</div>
+              <h1 className="text-2xl font-bold text-white mb-2">Ask me anything</h1>
+              <p className="text-muted-foreground text-sm mb-8">
+                AI trained on Yanpeng&apos;s resume & projects. Grounded answers only.
+              </p>
+              <div className="grid gap-2 max-w-md mx-auto">
+                {SUGGESTIONS.map((s, i) => (
+                  <button
+                    key={s.text}
+                    onClick={() => sendMessage({ text: s.text })}
+                    className={`animate-fade-up delay-${(i + 1) * 100} w-full text-left px-4 py-3 rounded-xl glass border border-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all text-sm text-muted-foreground hover:text-white group flex items-center gap-3`}
+                  >
+                    <span className="text-base group-hover:scale-110 transition-transform">{s.icon}</span>
+                    {s.text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div className="space-y-5">
+            {messages.map(m => {
+              const text = getTextFromMessage(m.parts)
+              if (!text && m.role === 'assistant') return null
+              const isUser = m.role === 'user'
+
+              return (
+                <div key={m.id}
+                  className={`flex gap-3 animate-fade-up ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  {!isUser && (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 glass border border-cyan-500/30 text-sm">
+                      🤖
+                    </div>
+                  )}
+                  <div className={cn(
+                    'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                    isUser
+                      ? 'bg-cyan-500 text-black font-medium rounded-br-sm'
+                      : 'glass border border-white/5 text-foreground rounded-bl-sm'
+                  )}>
+                    {text}
+                  </div>
+                  {isUser && (
+                    <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 mt-0.5 text-sm">
+                      👤
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Typing indicator */}
+            {isLoading && (
+              <div className="flex gap-3 animate-fade-in">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 glass border border-cyan-500/30 text-sm">
+                  🤖
+                </div>
+                <div className="glass border border-white/5 rounded-2xl rounded-bl-sm px-4 py-3">
+                  <div className="flex gap-1 items-center h-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* Input bar */}
+      <div className="relative flex-shrink-0 border-t border-white/5 bg-background/80 backdrop-blur-md">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <form
+            onSubmit={e => { e.preventDefault(); submit() }}
+            className="flex gap-3 items-center">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+              placeholder="Ask about my experience, projects, or skills..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="rounded-xl h-11 w-11 bg-cyan-500 hover:bg-cyan-400 text-black disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-105 shadow-lg shadow-cyan-500/25 flex-shrink-0 p-0">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground/60 text-center mt-2">
+            Answers grounded in Yanpeng&apos;s actual resume · Not general AI advice
           </p>
         </div>
-
-        {/* Messages */}
-        <div className="flex-1 space-y-4 mb-6 min-h-[300px]">
-          {messages.length === 0 && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Try asking:</p>
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => handleSuggestion(s)}
-                  className="block w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors text-sm"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {messages.map(m => {
-            const text = getTextFromMessage(m.parts)
-            if (!text && m.role === 'assistant') return null
-            return (
-              <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {m.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
-                    </svg>
-                  </div>
-                )}
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                  m.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground'
-                }`}>
-                  {text}
-                </div>
-                {m.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-
-          {isLoading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
-                </svg>
-              </div>
-              <div className="bg-muted rounded-2xl px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
-            placeholder="Ask about my projects, skills, or experience..."
-            className="flex-1 rounded-lg border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            disabled={isLoading}
-          />
-          <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="rounded-lg h-12 w-12">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </Button>
-        </form>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Powered by Gemini Flash · Answers grounded in Yanpeng&apos;s actual resume
-        </p>
       </div>
     </main>
   )
