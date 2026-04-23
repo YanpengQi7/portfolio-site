@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Include content/ directory in serverless function bundle for RAG
+  outputFileTracingIncludes: {
+    "/api/chat": ["./content/**/*"],
+  },
 };
 
 export default nextConfig;
