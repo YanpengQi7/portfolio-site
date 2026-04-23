@@ -6,6 +6,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useRef, useEffect, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 const SUGGESTIONS = [
   { text: "What AI projects has Yanpeng built?", icon: "🤖" },
@@ -110,9 +111,9 @@ export default function ChatPage() {
                     'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                     isUser
                       ? 'bg-cyan-500 text-black font-medium rounded-br-sm'
-                      : 'glass border border-white/5 text-foreground rounded-bl-sm'
+                      : 'glass border border-white/5 text-foreground rounded-bl-sm chat-markdown'
                   )}>
-                    {text}
+                    {isUser ? text : <ReactMarkdown>{text}</ReactMarkdown>}
                   </div>
                   {isUser && (
                     <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 mt-0.5 text-sm">
