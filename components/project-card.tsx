@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import ViewTransitionLink from '@/components/view-transition-link'
 import { Project } from '@/lib/content'
 
