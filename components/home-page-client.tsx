@@ -7,6 +7,7 @@ import { BookOpen, BriefcaseBusiness, FileText, FolderKanban, MessageSquareMore 
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import ProjectCard from '@/components/project-card'
+import ShaderHeroBg from '@/components/shader-hero-bg'
 import type { Project } from '@/lib/content'
 
 const SKILLS = [
@@ -173,19 +174,7 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
         )}
       >
         <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
-          <div
-            className="animate-glow animate-ambient absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full"
-            style={{ background: 'radial-gradient(circle, oklch(0.72 0.18 210 / 12%) 0%, transparent 70%)' }}
-          />
-          <div
-            className="animate-glow animate-ambient delay-500 absolute top-1/2 -right-60 w-[500px] h-[500px] rounded-full"
-            style={{ background: 'radial-gradient(circle, oklch(0.65 0.20 280 / 10%) 0%, transparent 70%)' }}
-          />
-          <div
-            className="animate-glow animate-ambient delay-300 absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full"
-            style={{ background: 'radial-gradient(circle, oklch(0.70 0.18 320 / 8%) 0%, transparent 70%)' }}
-          />
-          <div className="absolute inset-0 grid-bg opacity-40" />
+          <div className="absolute inset-0 grid-bg opacity-20" />
         </div>
 
         <nav className="relative z-50 border-b border-white/5 backdrop-blur-md bg-background/60">
@@ -231,7 +220,8 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
           </div>
         </nav>
 
-        <section className="relative max-w-5xl mx-auto px-6 pt-28 pb-20">
+        <section className="relative max-w-5xl mx-auto overflow-hidden px-6 pt-28 pb-20">
+          <ShaderHeroBg />
           <div className="grid lg:grid-cols-[1fr_auto] gap-12 items-center">
             <div>
               <div className="animate-fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-muted-foreground mb-8">
