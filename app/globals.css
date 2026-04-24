@@ -818,6 +818,18 @@ body::before {
   color: var(--foreground) !important;
 }
 
+:root[data-theme='light'] .text-cyan-200 {
+  color: oklch(0.38 0.09 230) !important;
+}
+
+:root[data-theme='light'] .text-cyan-300 {
+  color: oklch(0.34 0.10 230) !important;
+}
+
+:root[data-theme='light'] .text-cyan-400 {
+  color: oklch(0.40 0.11 230) !important;
+}
+
 .visual-card {
   perspective: 1000px;
   transform-style: preserve-3d;
