@@ -67,37 +67,37 @@ void main() {
   float aspect = u_resolution.x / max(u_resolution.y, 1.0);
   centered.x *= aspect;
 
-  float scrollShift = u_scroll * 0.35;
-  vec2 flowUv = centered * 2.2;
-  flowUv += vec2(u_time * 0.05, -u_time * 0.02);
-  flowUv += vec2(scrollShift, -scrollShift * 0.5);
+  float scrollShift = u_scroll * 0.28;
+  vec2 flowUv = centered * 1.85;
+  flowUv += vec2(u_time * 0.038, -u_time * 0.016);
+  flowUv += vec2(scrollShift, -scrollShift * 0.42);
 
   float base = fbm(flowUv);
   float detail = fbm(flowUv * 1.8 + vec2(4.2, -2.7) + u_time * 0.04);
   float swirl = fbm(vec2(base + flowUv.y, detail - flowUv.x) * 1.6);
 
-  vec3 darkA = vec3(0.10, 0.47, 0.86);
-  vec3 darkB = vec3(0.52, 0.24, 0.82);
-  vec3 lightA = vec3(0.66, 0.84, 0.98);
-  vec3 lightB = vec3(0.78, 0.74, 0.98);
+  vec3 darkA = vec3(0.08, 0.29, 0.52);
+  vec3 darkB = vec3(0.19, 0.25, 0.38);
+  vec3 lightA = vec3(0.83, 0.89, 0.96);
+  vec3 lightB = vec3(0.72, 0.80, 0.90);
 
   vec3 colorA = mix(darkA, lightA, u_theme);
   vec3 colorB = mix(darkB, lightB, u_theme);
   vec3 color = mix(colorA, colorB, smoothstep(0.2, 0.85, base + detail * 0.35));
 
   float ridge = smoothstep(0.25, 0.95, swirl);
-  color += ridge * mix(vec3(0.08, 0.12, 0.18), vec3(0.12, 0.12, 0.16), u_theme);
+  color += ridge * mix(vec3(0.04, 0.06, 0.10), vec3(0.09, 0.10, 0.12), u_theme);
 
   vec2 glowPoint = vec2(mouse.x, 1.0 - mouse.y);
   vec2 glowDelta = uv - glowPoint;
   glowDelta.x *= aspect;
-  float glow = exp(-length(glowDelta) * 6.5);
-  color += glow * mix(vec3(0.10, 0.28, 0.46), vec3(0.18, 0.22, 0.30), u_theme);
+  float glow = exp(-length(glowDelta) * 7.4);
+  color += glow * mix(vec3(0.06, 0.18, 0.30), vec3(0.10, 0.14, 0.20), u_theme);
 
-  float vignette = smoothstep(1.08, 0.18, length(centered));
+  float vignette = smoothstep(1.26, 0.12, length(centered));
   color *= vignette;
 
-  float alpha = mix(0.76, 0.52, u_theme);
+  float alpha = mix(0.68, 0.38, u_theme);
   gl_FragColor = vec4(color, alpha);
 }
 `
@@ -239,26 +239,25 @@ export default function ShaderHeroBg() {
   }, [])
 
   return (
-    <div ref={rootRef} className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden>
+    <div ref={rootRef} className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden>
       <div ref={mountRef} className={shaderReady ? 'opacity-100' : 'opacity-0'} />
 
       <div className={`absolute inset-0 transition-opacity duration-500 ${shaderReady ? 'opacity-0' : 'opacity-100'}`}>
         <div
-          className="animate-glow animate-ambient absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.72 0.18 210 / 14%) 0%, transparent 72%)' }}
+          className="animate-glow animate-ambient absolute -top-32 -left-24 h-[460px] w-[460px] rounded-full"
+          style={{ background: 'radial-gradient(circle, oklch(0.52 0.10 235 / 14%) 0%, transparent 72%)' }}
         />
         <div
-          className="animate-glow animate-ambient delay-500 absolute top-1/3 right-[-6rem] h-[360px] w-[360px] rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.66 0.18 280 / 12%) 0%, transparent 72%)' }}
+          className="animate-glow animate-ambient delay-500 absolute top-1/4 right-[-8rem] h-[420px] w-[420px] rounded-full"
+          style={{ background: 'radial-gradient(circle, oklch(0.40 0.06 260 / 10%) 0%, transparent 72%)' }}
         />
         <div
-          className="animate-glow animate-ambient delay-300 absolute bottom-[-5rem] left-1/3 h-[300px] w-[300px] rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.70 0.18 320 / 10%) 0%, transparent 72%)' }}
+          className="animate-glow animate-ambient delay-300 absolute bottom-[-10rem] left-1/3 h-[360px] w-[360px] rounded-full"
+          style={{ background: 'radial-gradient(circle, oklch(0.46 0.08 205 / 9%) 0%, transparent 72%)' }}
         />
       </div>
 
-      <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
+      <div className="absolute inset-0 grid-bg opacity-16" />
     </div>
   )
 }

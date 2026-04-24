@@ -173,6 +173,7 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
           contentVisible ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-6 blur-md pointer-events-none',
         )}
       >
+        <ShaderHeroBg />
         <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
           <div className="absolute inset-0 grid-bg opacity-20" />
         </div>
@@ -221,7 +222,6 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
         </nav>
 
         <section className="relative max-w-5xl mx-auto overflow-hidden px-6 pt-28 pb-20">
-          <ShaderHeroBg />
           <div className="grid lg:grid-cols-[1fr_auto] gap-12 items-center">
             <div>
               <div className="animate-fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-muted-foreground mb-8">
