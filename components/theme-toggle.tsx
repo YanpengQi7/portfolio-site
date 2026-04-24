@@ -1,31 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-
-type ThemeMode = 'dark' | 'light'
-
-const STORAGE_KEY = 'site-theme'
-const THEME_EVENT = 'site-theme-change'
-
-function readTheme(): ThemeMode {
-  if (typeof window === 'undefined') {
-    return 'dark'
-  }
-
-  const storedTheme = window.localStorage.getItem(STORAGE_KEY)
-  if (storedTheme === 'light' || storedTheme === 'dark') {
-    return storedTheme
-  }
-
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
-}
-
-function applyTheme(theme: ThemeMode) {
-  document.documentElement.dataset.theme = theme
-  document.documentElement.style.colorScheme = theme
-  window.localStorage.setItem(STORAGE_KEY, theme)
-  window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: theme }))
-}
+import { applyTheme, readTheme, THEME_EVENT, THEME_STORAGE_KEY } from '@/lib/theme-client'
 
 function subscribe(onStoreChange: () => void) {
   if (typeof window === 'undefined') {
@@ -37,7 +13,7 @@ function subscribe(onStoreChange: () => void) {
   }
 
   const handleStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY) {
+    if (event.key === THEME_STORAGE_KEY) {
       onStoreChange()
     }
   }
