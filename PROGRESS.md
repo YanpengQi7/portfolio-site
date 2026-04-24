@@ -118,9 +118,45 @@
 
 ### Commit 记录
 ```
+4b41826 feat: live model-router badge + multi-stage thinking trace in /chat
 d3e83ee feat: live RAG visualization in chat + View Transitions for project routes
 58438ad feat: blog, CV page, repositories, theme toggle, analytics, rate limit
 ```
+
+### 3. Model-router Badge（`4b41826`）
+
+`/chat` 导航栏右上角的 model 标签不再是写死字符串。
+
+**改动文件：** `app/chat/page.tsx`
+
+- 新增 `PROVIDER_INFO` 表：`google` / `groq` 各自的 label、圆点颜色、边框、fallback 标记
+- 新增 `<ModelBadge>` 组件：读 `lastAssistant.metadata.provider`，根据 provider 自动切换配色
+  - `google` → 绿色圆点 + 青色边框 + 「Gemini 2.5 Flash · RAG」
+  - `groq` → 琥珀圆点 + 琥珀边框 + 「Groq Llama 3.3 70B · RAG · fallback」
+- 带 `title` 悬浮提示，说明当前是主力还是 fallback
+
+**价值：** 当 Gemini quota 满或降级触发时，访客一眼就能看到「哦路由真的在工作」，不是静态装饰。
+
+### 4. Multi-stage Thinking Trace（`4b41826`）
+
+把原先的三点「typing dots」换成真实的思考过程可视化。
+
+**改动文件：** `app/chat/page.tsx`
+
+- 新增 `<ThinkingTrace>` 组件：纵向列表式 stages，每个 stage 有 `done` / `active` / `pending` 三态
+  - `done` — 绿色 ✓
+  - `active` — 青色闪烁圆点 + 文字 pulse
+  - `pending` — 灰色静态圆点
+- 根据 `status` + in-flight message 的 metadata 派生 stage 状态：
+  1. **Planning query** — status = submitted 时 active
+  2. **Retrieving from RAG** → 一旦 metadata 到达，立刻变成 「Retrieved N chunks」✓
+  3. **Synthesizing with Gemini 2.5 Flash / Groq Llama 3.3 70B** — metadata 到达后 active，开始流式输出文字后消失
+- 一旦第一个文字 token 流进来，整个 trace 隐藏，让消息气泡自然渲染
+
+**价值：**
+- 把黑盒的「AI 在思考」变成有结构的工程流程图
+- 实时显示 **真实 chunk 数** 和 **真实 model name**，不是假动画
+- 和 RAG 面板配合：trace 告诉你「发生了什么」，面板告诉你「检索到了什么」
 
 ### 为什么这两个改动对「作品集」有价值
 - **RAG 可视化**：招聘方看到的是「AI 说了什么」，现在还能看到「AI 为什么这么说」——把系统的工程细节暴露给面试官，直接当 demo 用
