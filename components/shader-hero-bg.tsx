@@ -78,26 +78,26 @@ void main() {
 
   vec3 darkA = vec3(0.08, 0.29, 0.52);
   vec3 darkB = vec3(0.19, 0.25, 0.38);
-  vec3 lightA = vec3(0.83, 0.89, 0.96);
-  vec3 lightB = vec3(0.72, 0.80, 0.90);
+  vec3 lightA = vec3(0.93, 0.96, 0.99);
+  vec3 lightB = vec3(0.82, 0.88, 0.95);
 
   vec3 colorA = mix(darkA, lightA, u_theme);
   vec3 colorB = mix(darkB, lightB, u_theme);
   vec3 color = mix(colorA, colorB, smoothstep(0.2, 0.85, base + detail * 0.35));
 
   float ridge = smoothstep(0.25, 0.95, swirl);
-  color += ridge * mix(vec3(0.04, 0.06, 0.10), vec3(0.09, 0.10, 0.12), u_theme);
+  color += ridge * mix(vec3(0.04, 0.06, 0.10), vec3(0.16, 0.18, 0.21), u_theme);
 
   vec2 glowPoint = vec2(mouse.x, 1.0 - mouse.y);
   vec2 glowDelta = uv - glowPoint;
   glowDelta.x *= aspect;
   float glow = exp(-length(glowDelta) * 7.4);
-  color += glow * mix(vec3(0.06, 0.18, 0.30), vec3(0.10, 0.14, 0.20), u_theme);
+  color += glow * mix(vec3(0.06, 0.18, 0.30), vec3(0.22, 0.30, 0.40), u_theme);
 
   float vignette = smoothstep(1.26, 0.12, length(centered));
   color *= vignette;
 
-  float alpha = mix(0.68, 0.38, u_theme);
+  float alpha = mix(0.68, 0.28, u_theme);
   gl_FragColor = vec4(color, alpha);
 }
 `
@@ -249,11 +249,11 @@ export default function ShaderHeroBg() {
         />
         <div
           className="animate-glow animate-ambient delay-500 absolute top-1/4 right-[-8rem] h-[420px] w-[420px] rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.40 0.06 260 / 10%) 0%, transparent 72%)' }}
+          style={{ background: 'radial-gradient(circle, oklch(0.84 0.03 245 / 9%) 0%, transparent 72%)' }}
         />
         <div
           className="animate-glow animate-ambient delay-300 absolute bottom-[-10rem] left-1/3 h-[360px] w-[360px] rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.46 0.08 205 / 9%) 0%, transparent 72%)' }}
+          style={{ background: 'radial-gradient(circle, oklch(0.78 0.04 215 / 8%) 0%, transparent 72%)' }}
         />
       </div>
 
