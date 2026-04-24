@@ -4,6 +4,20 @@ import { cn } from '@/lib/utils'
 import { getAllProjects } from '@/lib/content'
 import ProjectCard from '@/components/project-card'
 
+export const metadata = {
+  title: 'Yanpeng Qi — Projects',
+  description: 'AI-powered products built end-to-end across admissions, finance, automation, and retrieval.',
+  openGraph: {
+    title: 'Yanpeng Qi — Projects',
+    description: 'AI-powered products built end-to-end across admissions, finance, automation, and retrieval.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Yanpeng Qi — Projects',
+    description: 'AI-powered products built end-to-end across admissions, finance, automation, and retrieval.',
+  },
+}
+
 export default async function ProjectsPage() {
   const projects = await getAllProjects()
 

@@ -1,12 +1,36 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { buttonVariants } from '@/components/ui/button'
+import ReadingProgress from '@/components/reading-progress'
 import { cn } from '@/lib/utils'
 import { getProject, getAllProjects } from '@/lib/content'
 
 export async function generateStaticParams() {
   const projects = await getAllProjects()
   return projects.map(p => ({ slug: p.slug }))
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const project = await getProject(slug)
+  if (!project) {
+    return {}
+  }
+
+  return {
+    title: `${project.title} — Yanpeng Qi`,
+    description: project.subtitle,
+    openGraph: {
+      title: project.title,
+      description: project.subtitle,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: project.title,
+      description: project.subtitle,
+    },
+  }
 }
 
 const ACCENT_MAP: Record<string, string> = {
@@ -25,6 +49,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <main className="min-h-screen bg-background">
+      <ReadingProgress />
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full animate-glow"

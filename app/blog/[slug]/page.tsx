@@ -1,10 +1,34 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getAllBlogPosts, getBlogPost } from '@/lib/content'
+import ReadingProgress from '@/components/reading-progress'
 
 export async function generateStaticParams() {
   const posts = await getAllBlogPosts()
   return posts.map(post => ({ slug: post.slug }))
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const post = await getBlogPost(slug)
+  if (!post) {
+    return {}
+  }
+
+  return {
+    title: `${post.title} — Yanpeng Qi`,
+    description: post.subtitle,
+    openGraph: {
+      title: post.title,
+      description: post.subtitle,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.subtitle,
+    },
+  }
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -14,6 +38,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-background">
+      <ReadingProgress />
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
         <div
           className="absolute -top-36 left-1/2 -translate-x-1/2 w-[620px] h-[420px] rounded-full animate-glow"

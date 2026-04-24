@@ -4,6 +4,15 @@ import { getAllBlogPosts } from '@/lib/content'
 export const metadata = {
   title: 'Yanpeng Qi — Blog',
   description: 'Technical writing on RAG, model routing, agent systems, and product-minded engineering.',
+  openGraph: {
+    title: 'Yanpeng Qi — Blog',
+    description: 'Technical writing on RAG, model routing, agent systems, and product-minded engineering.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Yanpeng Qi — Blog',
+    description: 'Technical writing on RAG, model routing, agent systems, and product-minded engineering.',
+  },
 }
 
 export default async function BlogPage() {
