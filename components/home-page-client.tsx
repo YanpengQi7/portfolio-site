@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import ProjectCard from '@/components/project-card'
 import ShaderHeroBg from '@/components/shader-hero-bg'
+import LandingSplash from '@/components/home/landing-splash'
 import type { Project } from '@/lib/content'
 
 const SKILLS = [
@@ -84,8 +85,9 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
   )
 
   const hasSeenIntro = isClient && window.sessionStorage.getItem(INTRO_STORAGE_KEY) === 'true'
-  const introVisible = !hasSeenIntro && (introState === 'visible' || introState === 'exiting')
-  const contentVisible = hasSeenIntro || introState === 'hidden' || introState === 'exiting'
+  // Old intro overlay is superseded by <LandingSplash />; force-hide it.
+  const introVisible = false
+  const contentVisible = hasSeenIntro || introState === 'hidden' || introState === 'exiting' || true
 
   const enterSite = () => {
     if (introState !== 'visible') return
@@ -106,6 +108,7 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
 
   return (
     <>
+      <LandingSplash />
       {introVisible && (
         <div
           className={cn('intro-overlay', introClassName)}

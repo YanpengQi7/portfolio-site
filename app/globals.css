@@ -1174,6 +1174,28 @@ button:hover .theme-toggle-orb::after {
   .apple-cursor-glow, .apple-cursor-ring { display: none; }
 }
 
+/* Splash hairline lines flanking "Click to enter" */
+.splash-line {
+  width: 36px;
+  height: 1px;
+  background: var(--ink-3);
+  display: inline-block;
+  opacity: .6;
+  transition: background .25s, width .35s;
+}
+.splash-root:hover .splash-line {
+  background: var(--apple-accent);
+  width: 56px;
+}
+.splash-root:hover .splash-enter {
+  color: var(--apple-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-root *,
+  .splash-root::before,
+  .splash-root::after { animation: none !important; }
+}
+
 /* View Transitions — cross-fade + subtle slide for the default route change */
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root),
