@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import ThemeInitScript from '@/components/theme-init-script'
 import CommandPalette from '@/components/command-palette'
 import ThemeToggle from '@/components/theme-toggle'
+import CursorFx from '@/components/cursor-fx'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeInitScript />
         {children}
+        <CursorFx />
         <CommandPalette />
         <ThemeToggle />
         <Analytics />
