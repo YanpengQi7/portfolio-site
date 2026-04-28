@@ -132,7 +132,7 @@ export default function Continuity() {
                 lineHeight: 1.6,
               }}
             >
-              <div style={{ color: 'var(--ink-3)' }}>// app/api/chat/route.ts</div>
+              <div style={{ color: 'var(--ink-3)' }}>{'// app/api/chat/route.ts'}</div>
               <div>
                 <span style={{ color: 'var(--apple-accent)' }}>export async</span>{' '}
                 <span style={{ color: 'var(--apple-accent)' }}>function</span> POST(req)
