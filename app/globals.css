@@ -1174,6 +1174,11 @@ button:hover .theme-toggle-orb::after {
   .apple-cursor-glow, .apple-cursor-ring { display: none; }
 }
 
+/* TopNav hover */
+.apple-nav-link { transition: color .2s, opacity .2s; opacity: .88; }
+.apple-nav-link:hover { color: var(--ink); opacity: 1; }
+.apple-nav-cmd:hover { color: var(--ink); border-color: var(--rule-strong); }
+
 /* Splash hairline lines flanking "Click to enter" */
 .splash-line {
   width: 36px;
