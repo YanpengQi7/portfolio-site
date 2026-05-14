@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { href: '/#work', label: 'Work' },
   { href: '/#writing', label: 'Writing' },
   { href: '/cv', label: 'CV' },
+  { href: '/game', label: 'Game' },
   { href: '/chat', label: 'Chat' },
 ]
 

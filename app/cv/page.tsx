@@ -47,6 +47,8 @@ const EXPERIENCE = [
         summary: 'Worked on identity-aware backend systems and AI-assisted developer workflows.',
         bullets: [
           'Built an identity-aware microservice on AWS Fargate for automated membership validation with secure cross-account isolation.',
+          'Led a cross-region migration for a Redis-backed device-awareness workload in EU infrastructure, writing the migration plan, provisioning the destination Lambda + Redis stack ahead of time, and coordinating phased traffic movement.',
+          'Used VPC peering, async dual-writes, and a one-day TTL overlap window to keep Redis state aligned across both regions, avoid meaningful latency regressions, and eliminate cold-start or cache-consistency issues during cutover.',
           'Integrated an AI code review assistant into CI/CD with AWS Lambda and a managed cloud LLM platform, reducing manual review cycles by 25% through tiered prompt design.',
           'Deployed an async job orchestration system for large-scale metadata sync with proactive CloudWatch alerting for authentication anomalies.',
         ],

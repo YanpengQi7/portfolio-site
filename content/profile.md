@@ -27,6 +27,7 @@ Led engineering across multiple high-impact initiatives on a 1M+ user product at
 **Identity and Platform Services**
 
 - Built an identity-aware microservice on AWS Fargate for automated membership validation with fine-grained IAM policies ensuring secure cross-account data isolation.
+- Led a cross-region migration of a Redis-backed device-awareness workload across EU infrastructure. Designed the migration plan and rollout docs, stood up the destination Lambda + Redis stack in advance, and used async dual-writes plus a full TTL overlap window to preserve cache consistency during cutover without meaningful latency impact.
 - Integrated an AI code review assistant into CI/CD using AWS Lambda and a managed cloud LLM platform. Designed tiered prompt templates (critical vs. suggestions) — reduced manual review cycles by 25%.
 - Deployed an async job orchestration system for large-scale metadata sync with custom CloudWatch alerting to detect authentication anomalies proactively.
 

@@ -23,12 +23,17 @@ cp .env.example .env.local
 - `GROQ_API_KEY`: optional fallback model
 - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: optional chat rate limiting and conversation persistence
 - `KV_REST_API_URL` and `KV_REST_API_TOKEN`: optional Vercel KV-compatible Redis variables for conversation persistence
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and `SPOTIFY_REFRESH_TOKEN`: optional Now Playing panel
+- `WAKATIME_API_KEY`: optional coding activity for the live signals panel
+- `LIVE_CITY`, `LIVE_LATITUDE`, `LIVE_LONGITUDE`, and `LIVE_TIME_ZONE`: weather and local clock source
+- `LIVE_LINES_TODAY`, `LIVE_STEPS_TODAY`, and `LIVE_READING_NOW`: optional manual fields until those sources are connected
 
 ## Implemented
 
 - App Router portfolio pages
 - MD content-backed project detail pages
 - AI chat with grounded resume/project context
+- Live signals panel with Spotify, WakaTime, weather, local time, movement, and reading slots
 - Provider fallback: Gemini -> Groq
 - Optional Upstash rate limiting for `/api/chat`
 - Optional Redis/KV conversation persistence for `/api/chat`

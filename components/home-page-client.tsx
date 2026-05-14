@@ -4,6 +4,7 @@ import LandingSplash from '@/components/home/landing-splash'
 import TopNav from '@/components/home/top-nav'
 import Hero from '@/components/home/hero'
 import StatsBar from '@/components/home/stats-bar'
+import LiveSignals from '@/components/home/live-signals'
 import TileGrid from '@/components/home/tile-grid'
 import ProjectCards from '@/components/home/project-cards'
 import AIChat from '@/components/home/ai-chat'
@@ -19,6 +20,7 @@ export default function HomePageClient({ featured }: { featured: Project[] }) {
       <main style={{ background: 'var(--bg-apple)', color: 'var(--ink)' }}>
         <Hero variant="keynote" />
         <StatsBar />
+        <LiveSignals />
         <TileGrid />
         <ProjectCards featured={featured} />
         <AIChat />
