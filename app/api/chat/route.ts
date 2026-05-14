@@ -8,6 +8,41 @@ import { buildSystemPrompt } from '@/lib/ai/system-prompt'
 
 export const maxDuration = 30
 
+function getMessageText(message: UIMessage | undefined): string {
+  if (!message) return ''
+
+  const parts = (message as UIMessage & { parts?: unknown[] }).parts
+  if (Array.isArray(parts)) {
+    return parts
+      .map(part => {
+        if (typeof part !== 'object' || part === null) return ''
+        const candidate = part as { type?: unknown; text?: unknown }
+        if (candidate.type !== 'text') return ''
+        return typeof candidate.text === 'string' ? candidate.text : ''
+      })
+      .join('')
+      .trim()
+  }
+
+  return String((message as { content?: unknown }).content ?? '').trim()
+}
+
+function buildRetrievalQuery(messages: UIMessage[], lastUserText: string): string {
+  const recentUserTurns = messages
+    .filter(message => message.role === 'user')
+    .slice(-3)
+    .map(getMessageText)
+    .filter(Boolean)
+
+  if (recentUserTurns.length === 0) return lastUserText
+
+  const query = Array.from(new Set([...recentUserTurns, lastUserText]))
+    .join('\n')
+    .slice(0, 1200)
+
+  return query || lastUserText
+}
+
 export async function POST(req: Request) {
   const ip = getClientIp(req)
   const rateLimit = await checkChatRateLimit(ip)
@@ -39,17 +74,12 @@ export async function POST(req: Request) {
 
   // Extract last user message text for RAG (UIMessage parts array)
   const lastUserMessage = messages.findLast(m => m.role === 'user')
-  const lastUserText = lastUserMessage
-    ? (Array.isArray((lastUserMessage as UIMessage & { parts?: unknown[] }).parts)
-        ? (lastUserMessage as UIMessage & { parts: Array<{ type: string; text?: string }> }).parts
-            .filter(p => p.type === 'text')
-            .map(p => p.text ?? '')
-            .join('')
-        : String((lastUserMessage as { content?: unknown }).content ?? ''))
-    : ''
+  const lastUserText = getMessageText(lastUserMessage)
+  const retrievalQuery = buildRetrievalQuery(messages, lastUserText)
 
-  // RAG: retrieve relevant content chunks
-  const rag = await retrieveRag(lastUserText)
+  // RAG: retrieve relevant content chunks. Include recent user turns so
+  // follow-up questions like "what about that project?" keep their subject.
+  const rag = await retrieveRag(retrievalQuery, 6)
   const context = rag.context
 
   // Compact chunk preview for the client (source + score + snippet)

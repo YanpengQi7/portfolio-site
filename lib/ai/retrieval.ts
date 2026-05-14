@@ -97,19 +97,33 @@ function tokenize(text: string): string[] {
 
 function scoreChunk(chunk: Omit<Chunk, 'score'>, queryTerms: string[]): number {
   const lowerText = chunk.text.toLowerCase()
+  const lowerSource = chunk.source.toLowerCase()
+  const leadText = lowerText.slice(0, 240)
   const phraseBoost = lowerText.includes('what it is') ? 1 : 0
   const projectBoost =
     chunk.kind === 'project' && queryTerms.some(term => term === 'project' || term === 'projects' || term === 'built')
       ? 3
       : 0
+  const experienceBoost =
+    chunk.kind === 'profile' && queryTerms.some(term => term === 'amazon' || term === 'experience' || term === 'work')
+      ? 12
+      : 0
+  const sourceBoost = queryTerms.reduce(
+    (score, term) => score + (lowerSource.includes(term) ? 5 : 0),
+    0,
+  )
+  const leadBoost = queryTerms.reduce(
+    (score, term) => score + (leadText.includes(term) ? 2 : 0),
+    0,
+  )
 
   const keywordScore = queryTerms.reduce((score, term) => {
     const escaped = escapeRegExp(term)
     const matches = lowerText.match(new RegExp(`\\b${escaped}\\b`, 'g')) || []
-    return score + matches.length
+    return score + Math.min(matches.length, 3)
   }, 0)
 
-  return keywordScore + phraseBoost + projectBoost
+  return keywordScore + sourceBoost + leadBoost + phraseBoost + projectBoost + experienceBoost
 }
 
 function inferKind(source: string): Chunk['kind'] {
@@ -125,7 +139,9 @@ function escapeRegExp(value: string): string {
 }
 
 const STOPWORDS = new Set([
+  'the', 'and', 'for', 'you', 'are', 'was', 'will', 'can', 'could', 'would',
   'what', 'which', 'about', 'have', 'has', 'with', 'from', 'into', 'than', 'that',
   'this', 'those', 'their', 'them', 'they', 'your', 'were', 'been', 'being', 'build',
-  'built', 'yanpeng',
+  'does', 'did', 'done', 'involved', 'use', 'used', 'tell', 'how', 'its', 'it', 'me', 'my', 'his',
+  'her', 'him', 'she', 'who', 'why', 'when', 'where', 'yanpeng',
 ])
