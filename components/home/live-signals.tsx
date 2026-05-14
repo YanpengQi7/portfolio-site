@@ -18,6 +18,7 @@ type LiveData = {
   music: {
     configured: boolean
     isPlaying: boolean
+    source: string
     title: string
     artist: string
     album: string
@@ -25,6 +26,7 @@ type LiveData = {
     url: string | null
     progressMs: number
     durationMs: number
+    playedAt?: string | null
   }
   coding: {
     configured: boolean
@@ -56,13 +58,15 @@ const fallbackData: LiveData = {
   music: {
     configured: false,
     isPlaying: false,
+    source: 'Last.fm',
     title: 'Live feed warming up',
-    artist: 'Spotify connects here',
+    artist: 'Last.fm connects here',
     album: 'Now Playing',
     albumArt: null,
     url: null,
     progressMs: 0,
     durationMs: 0,
+    playedAt: null,
   },
   coding: {
     configured: false,
@@ -227,8 +231,8 @@ export default function LiveSignals() {
             </div>
             <div className="live-track">
               <div className="live-track__meta">
-                <span>{data.music.isPlaying ? 'Now playing' : 'Audio idle'}</span>
-                <span>{data.music.configured ? 'Spotify' : 'Source pending'}</span>
+                <span>{data.music.isPlaying ? 'Scrobbling now' : 'Last scrobble'}</span>
+                <span>{data.music.configured ? data.music.source : 'Source pending'}</span>
               </div>
               <h3>{data.music.title}</h3>
               <p>{data.music.artist}</p>

@@ -1,23 +1,3 @@
-type SpotifyTokenResponse = {
-  access_token?: string
-  error?: string
-}
-
-type SpotifyNowPlayingResponse = {
-  is_playing?: boolean
-  progress_ms?: number
-  item?: {
-    name?: string
-    duration_ms?: number
-    album?: {
-      name?: string
-      images?: Array<{ url: string; width?: number; height?: number }>
-    }
-    artists?: Array<{ name: string }>
-    external_urls?: { spotify?: string }
-  }
-}
-
 type WakaTimeSummaryResponse = {
   data?: Array<{
     grand_total?: {
@@ -41,9 +21,25 @@ type OpenMeteoResponse = {
   }
 }
 
-const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
-const SPOTIFY_NOW_PLAYING_URL =
-  'https://api.spotify.com/v1/me/player/currently-playing'
+type LastFmRecentTracksResponse = {
+  recenttracks?: {
+    track?: LastFmTrack | LastFmTrack[]
+  }
+  error?: number
+  message?: string
+}
+
+type LastFmTrack = {
+  name?: string
+  artist?: { '#text'?: string; name?: string }
+  album?: { '#text'?: string }
+  image?: Array<{ '#text'?: string; size?: string }>
+  url?: string
+  date?: { uts?: string; '#text'?: string }
+  '@attr'?: { nowplaying?: string }
+}
+
+const LASTFM_API_URL = 'https://ws.audioscrobbler.com/2.0/'
 
 const CITY = process.env.LIVE_CITY ?? 'Seattle'
 const LATITUDE = process.env.LIVE_LATITUDE ?? '47.6062'
@@ -62,83 +58,94 @@ function json(data: unknown, init?: ResponseInit) {
   })
 }
 
-async function fetchSpotifyNowPlaying() {
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-  const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
+function pickLastFmImage(images?: LastFmTrack['image']) {
+  const image = images
+    ?.slice()
+    .reverse()
+    .find(item => item['#text'])
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  return image?.['#text'] ?? null
+}
+
+async function fetchLastFmNowPlaying() {
+  const apiKey = process.env.LASTFM_API_KEY
+  const username = process.env.LASTFM_USERNAME
+
+  if (!apiKey || !username) {
     return {
       configured: false,
       isPlaying: false,
-      title: 'Connect Spotify',
-      artist: 'Set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN',
-      album: 'Live music source',
+      source: 'Last.fm',
+      title: 'Connect Last.fm',
+      artist: 'Set LASTFM_API_KEY and LASTFM_USERNAME',
+      album: 'Recent scrobbles',
       albumArt: null,
       url: null,
       progressMs: 0,
       durationMs: 0,
+      playedAt: null,
     }
   }
 
-  const tokenRes = await fetch(SPOTIFY_TOKEN_URL, {
-    method: 'POST',
+  const params = new URLSearchParams({
+    method: 'user.getrecenttracks',
+    user: username,
+    api_key: apiKey,
+    format: 'json',
+    limit: '1',
+  })
+
+  const res = await fetch(`${LASTFM_API_URL}?${params}`, {
     headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'yanpengqi.com live signals panel',
     },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
     cache: 'no-store',
   })
 
-  if (!tokenRes.ok) {
-    throw new Error(`Spotify token request failed: ${tokenRes.status}`)
+  if (!res.ok) {
+    throw new Error(`Last.fm request failed: ${res.status}`)
   }
 
-  const tokenData = (await tokenRes.json()) as SpotifyTokenResponse
-  if (!tokenData.access_token) {
-    throw new Error(tokenData.error ?? 'Spotify token response missing access_token')
+  const data = (await res.json()) as LastFmRecentTracksResponse
+  if (data.error) {
+    throw new Error(data.message ?? `Last.fm error ${data.error}`)
   }
 
-  const nowPlayingRes = await fetch(SPOTIFY_NOW_PLAYING_URL, {
-    headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    cache: 'no-store',
-  })
+  const tracks = data.recenttracks?.track
+  const track = Array.isArray(tracks) ? tracks[0] : tracks
 
-  if (nowPlayingRes.status === 204 || nowPlayingRes.status === 202) {
+  if (!track) {
     return {
       configured: true,
       isPlaying: false,
-      title: 'Nothing playing',
-      artist: 'Spotify is connected',
-      album: 'Paused',
+      source: 'Last.fm',
+      title: 'No scrobbles yet',
+      artist: username,
+      album: 'Recent tracks',
       albumArt: null,
-      url: null,
+      url: `https://www.last.fm/user/${encodeURIComponent(username)}`,
       progressMs: 0,
       durationMs: 0,
+      playedAt: null,
     }
   }
 
-  if (!nowPlayingRes.ok) {
-    throw new Error(`Spotify now playing request failed: ${nowPlayingRes.status}`)
-  }
-
-  const data = (await nowPlayingRes.json()) as SpotifyNowPlayingResponse
-  const albumArt = data.item?.album?.images?.[0]?.url ?? null
+  const isPlaying = track['@attr']?.nowplaying === 'true'
+  const artist = track.artist?.['#text'] ?? track.artist?.name ?? 'Unknown artist'
+  const album = track.album?.['#text'] || (isPlaying ? 'Scrobbling now' : 'Last scrobbled')
 
   return {
     configured: true,
-    isPlaying: Boolean(data.is_playing),
-    title: data.item?.name ?? 'Unknown track',
-    artist: data.item?.artists?.map(artist => artist.name).join(', ') ?? 'Unknown artist',
-    album: data.item?.album?.name ?? 'Unknown album',
-    albumArt,
-    url: data.item?.external_urls?.spotify ?? null,
-    progressMs: data.progress_ms ?? 0,
-    durationMs: data.item?.duration_ms ?? 0,
+    isPlaying,
+    source: 'Last.fm',
+    title: track.name ?? 'Unknown track',
+    artist,
+    album,
+    albumArt: pickLastFmImage(track.image),
+    url: track.url ?? `https://www.last.fm/user/${encodeURIComponent(username)}`,
+    progressMs: 0,
+    durationMs: 0,
+    playedAt: track.date?.['#text'] ?? null,
   }
 }
 
@@ -246,7 +253,7 @@ function localClock() {
 
 export async function GET() {
   const settled = await Promise.allSettled([
-    fetchSpotifyNowPlaying(),
+    fetchLastFmNowPlaying(),
     fetchWakaTimeToday(),
     fetchWeather(),
   ])
@@ -261,13 +268,15 @@ export async function GET() {
         : {
             configured: false,
             isPlaying: false,
+            source: 'Last.fm',
             title: 'Music signal unavailable',
             artist: music.reason instanceof Error ? music.reason.message : 'Unable to reach source',
-            album: 'Spotify',
+            album: 'Last.fm',
             albumArt: null,
             url: null,
             progressMs: 0,
             durationMs: 0,
+            playedAt: null,
           },
     coding:
       coding.status === 'fulfilled'
