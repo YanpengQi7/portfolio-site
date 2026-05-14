@@ -1136,48 +1136,6 @@ button:hover .theme-toggle-orb::after {
 }
 .apple-spotlight:hover::before { opacity: 1; }
 
-/* Cursor FX containers */
-.apple-cursor-glow,
-.apple-cursor-ring {
-  position: fixed;
-  top: 0; left: 0;
-  pointer-events: none;
-  z-index: 9998;
-  will-change: transform;
-}
-.apple-cursor-glow {
-  width: 220px; height: 220px;
-  margin: -110px 0 0 -110px;
-  border-radius: 50%;
-  filter: blur(60px);
-  background: radial-gradient(circle, var(--apple-accent) 0%, transparent 70%);
-  mix-blend-mode: multiply;
-  opacity: 0.55;
-}
-[data-theme="dark"] .apple-cursor-glow {
-  mix-blend-mode: screen;
-  opacity: 0.45;
-}
-.apple-cursor-ring {
-  width: 28px; height: 28px;
-  margin: -14px 0 0 -14px;
-  border-radius: 50%;
-  border: 0.5px solid var(--ink);
-  background: transparent;
-  transition: transform .25s cubic-bezier(.2,.8,.2,1), background .25s, border-color .25s;
-}
-.apple-cursor-ring.is-grow {
-  transform: scale(1.75);
-  background: var(--apple-accent);
-  border-color: var(--apple-accent);
-}
-@media (pointer: coarse) {
-  .apple-cursor-glow, .apple-cursor-ring { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .apple-cursor-glow, .apple-cursor-ring { display: none; }
-}
-
 /* Tile hover lift */
 .apple-tile { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; }
 .apple-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
