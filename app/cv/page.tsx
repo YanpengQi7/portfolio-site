@@ -59,6 +59,28 @@ const EXPERIENCE = [
 
 const PROJECTS = [
   {
+    title: 'AI Reliability Copilot',
+    period: '2026',
+    url: 'https://ai-reliability-copilot.vercel.app/',
+    accent: 'text-blue-400 border-blue-400/20 bg-blue-400/8',
+    bullets: [
+      'Built an incident-response copilot that turns raw Datadog, PagerDuty, Sentry, and on-call context into a structured nine-section reliability report.',
+      'Designed bilingual prompt flows, sample incident scenarios, eval surfaces, and knowledge-base affordances for repeatable SRE-style analysis.',
+      'Shipped a production Vercel demo with request limiting, JSON alert parsing, and a workflow optimized for fast triage during high-pressure incidents.',
+    ],
+  },
+  {
+    title: 'Book Traveler / Shuzhongren',
+    period: '2026',
+    url: 'https://book-traveler.vercel.app/',
+    accent: 'text-amber-300 border-amber-300/20 bg-amber-300/8',
+    bullets: [
+      'Built an AI-driven interactive wuxia fiction app where readers create a character, enter a novel world, and steer irreversible story branches.',
+      'Designed a three-beat narrative engine that generates outlines, chapter direction, and major fate nodes while preserving a classical Chinese prose style.',
+      'Implemented archive-oriented product flows for starting, continuing, and eventually sharing personalized story runs across multiple source worlds.',
+    ],
+  },
+  {
     title: 'Admitly',
     period: '2025',
     accent: 'text-cyan-400 border-cyan-400/20 bg-cyan-400/8',
@@ -368,6 +390,16 @@ export default function CvPage() {
                         </li>
                       ))}
                     </ul>
+                    {'url' in project && project.url && (
+                      <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex text-sm font-medium text-cyan-300 transition-colors hover:text-white"
+                      >
+                        Live demo
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
