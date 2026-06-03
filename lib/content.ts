@@ -37,6 +37,13 @@ function escapeHtml(value: string): string {
 // Simple markdown to HTML (no extra deps needed for basic formatting)
 function markdownToHtml(markdown: string): string {
   const codeBlocks: string[] = []
+  const htmlBlocks: string[] = []
+
+  const stashHtml = (block: string) => {
+    const token = `__HTML_BLOCK_${htmlBlocks.length}__`
+    htmlBlocks.push(block)
+    return token
+  }
 
   const html = markdown
     .replace(/```([\w-]+)?\n([\s\S]*?)```/g, (_, language: string | undefined, code: string) => {
@@ -51,24 +58,41 @@ function markdownToHtml(markdown: string): string {
       codeBlocks.push(block)
       return token
     })
+    // Stash block-level raw HTML (figure, svg, blockquote) so paragraph wrapping leaves it alone
+    .replace(/^<(figure|svg|blockquote|aside)[\s\S]*?<\/\1>\s*$/gm, match => stashHtml(match))
+    // Markdown images on their own line → <figure>
+    .replace(/^!\[([^\]]*)\]\(([^)]+?)(?:\s+"([^"]*)")?\)\s*$/gm, (_, alt: string, src: string, title?: string) => {
+      const caption = title || alt
+      const fig = [
+        '<figure class="my-8">',
+        `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rounded-xl border border-white/8 bg-white/[0.02] w-full" loading="lazy" />`,
+        caption ? `<figcaption class="text-xs text-muted-foreground mt-2 text-center">${escapeHtml(caption)}</figcaption>` : '',
+        '</figure>',
+      ].join('')
+      return stashHtml(fig)
+    })
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-8 mb-3">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-8 mb-4">$1</h1>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-cyan-300 hover:text-cyan-200 underline underline-offset-2">$1</a>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code class="bg-muted px-1 rounded text-sm font-mono">$1</code>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
     .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul class="my-3 space-y-1">$&</ul>')
     .replace(/\n\n/g, '</p><p class="mb-4">')
-    .replace(/^(?!<[hul])(.+)$/gm, '<p class="mb-4">$1</p>')
+    .replace(/^(?!<[hul]|__HTML_BLOCK_|__CODE_BLOCK_)(.+)$/gm, '<p class="mb-4">$1</p>')
     .replace(/<p class="mb-4"><\/p>/g, '')
+    .replace(/<p class="mb-4">(__HTML_BLOCK_\d+__)<\/p>/g, '$1')
 
-  return html.replace(/<p class="mb-4">(__CODE_BLOCK_\d+__)<\/p>|(__CODE_BLOCK_\d+__)/g, (_, tokenA: string | undefined, tokenB: string | undefined) => {
-    const token = tokenA ?? tokenB
-    if (!token) return ''
-    const index = Number(token.replace('__CODE_BLOCK_', '').replace('__', ''))
-    return codeBlocks[index] ?? ''
-  })
+  return html
+    .replace(/__HTML_BLOCK_(\d+)__/g, (_, idx: string) => htmlBlocks[Number(idx)] ?? '')
+    .replace(/<p class="mb-4">(__CODE_BLOCK_\d+__)<\/p>|(__CODE_BLOCK_\d+__)/g, (_, tokenA: string | undefined, tokenB: string | undefined) => {
+      const token = tokenA ?? tokenB
+      if (!token) return ''
+      const index = Number(token.replace('__CODE_BLOCK_', '').replace('__', ''))
+      return codeBlocks[index] ?? ''
+    })
 }
 
 export async function getAllProjects(): Promise<Project[]> {

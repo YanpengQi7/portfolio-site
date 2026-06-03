@@ -1,8 +1,8 @@
 ---
 title: How I Choose AWS Compute for AI and Product Systems
-subtitle: The right AWS compute choice usually comes from workload shape, runtime control, latency goals, and ops appetite.
+subtitle: A field guide written after a few too many migrations between Lambda, Fargate, and EKS. The lesson keeps being "match the abstraction to the workload, not your résumé."
 date: 2024-11-03
-readingTime: 8 min read
+readingTime: 9 min read
 tags:
   - AWS
   - Architecture
@@ -12,123 +12,92 @@ featured: false
 
 # How I Choose AWS Compute for AI and Product Systems
 
-I do not think there is a single "best" AWS compute service.
+I've migrated production workloads in both directions between Lambda and Fargate, and from self-managed Kubernetes to EKS-on-Fargate and back. The decisions that aged well were the ones where the team picked the abstraction that matched the workload's actual shape. The decisions that aged badly were almost always driven by what the team wanted to learn, or what looked good on an architecture diagram for a future state that never arrived.
 
-The better question is: what kind of workload am I running, and what kind of operational ownership am I willing to take?
+This is the working heuristic I use now, written out so I can argue with it later.
 
-That question usually narrows the answer quickly.
+## The questions I ask before I look at services
 
-## Step 1: Classify the Workload
+Before "Lambda vs Fargate vs EKS," I want concrete answers to four things. They're boring and they decide most of it.
 
-Before I think about services, I classify the workload itself.
+1. **How long does a single unit of work run?** Under a second, under a minute, under fifteen minutes, longer? Lambda has a hard 15-minute cap and gets expensive on long-running compute regardless of timeout. Anything routinely past that bracket forces containers.
+2. **What's the traffic shape?** Steady? Bursty by 10×? Spiky by 100×? Idle most of the day? Cold-start tolerance correlates strongly with this — a webhook handler that fires twice an hour shouldn't be paying for a warm container.
+3. **What's the runtime footprint?** Python with a few pip packages, or a container with CUDA drivers, system binaries, and a 2GB model? Lambda's package size limits and the friction of custom runtimes start to bite around the 250MB unzipped mark.
+4. **Who operates this in six months?** If it's the same two engineers, simplicity wins. If it's a platform team supporting 30 services, the surface that pays for Kubernetes' overhead is "we have many services that all want the same primitives."
 
-```ts
-type WorkloadShape =
-  | 'event-driven'
-  | 'request-response-api'
-  | 'long-running-service'
-  | 'batch-job'
-  | 'platform-workload'
+If I can answer those, the service usually picks itself. The rest of this post is what that picking looks like in practice.
 
-type Constraints = {
-  maxDurationMinutes?: number
-  needsContainerControl: boolean
-  needsKubernetesFeatures: boolean
-  trafficPattern: 'steady' | 'bursty' | 'spiky'
-}
-```
+## Lambda: still the right answer more often than people admit
 
-Most compute debates become easier once these properties are explicit.
+I default to Lambda for anything event-driven, short, and stateless. The places it has earned that default for me:
 
-## When I Like Lambda
+- S3 → process → DynamoDB pipelines, where each event is independent and finishes in under a few seconds.
+- Webhook receivers that need to scale from 1 to 10,000 RPS for ten seconds and then go back to zero. Pay-per-invocation makes this nearly free at idle.
+- Cron jobs for cleanup, syncing, or reporting, where "spin up a container" is more infra than the job deserves.
+- API handlers that are CRUD with light transformation, deployed behind API Gateway or a Lambda Function URL.
 
-I like Lambda when the task is:
+What pushes me off Lambda, in order of how often it actually does:
 
-- short-lived
-- stateless
-- naturally event-driven
-- not dependent on complex runtime packaging
+- The job needs >15 min. Sometimes this is real, sometimes it's a sign the job should be split.
+- Cold starts matter for the user, and the runtime + dependencies don't fit in a snappy bootstrap. Provisioned concurrency exists; it also undoes the pay-per-invocation case.
+- The team starts wanting "just normal sockets" — a long-lived connection pool, a websocket server, an actually-stateful queue consumer.
+- The deployment package is wrestling itself. By the time I'm building custom runtimes to fit native deps, I'd rather be in a container.
 
-Examples:
+The mistake I see most often is leaving something on Lambda for two years past when it should have moved, because the migration "isn't worth it." It usually is.
 
-- file processing
-- webhook handling
-- scheduled checks
-- lightweight API handlers
+## Fargate: the boring middle that does most of the work
 
-Lambda is often excellent for glue logic and bursty traffic, especially when idle time would make always-on infrastructure wasteful.
+For long-running services, my default is ECS on Fargate. It's the abstraction I reach for when I want "containers without nodes."
 
-## When I Like Fargate
+What it earns its keep on:
 
-I like Fargate when I need:
+- Internal microservices and APIs where I want explicit CPU/memory sizing and predictable scale-out behavior.
+- Background workers consuming from SQS that need to hold connections, batch work, and run for hours.
+- Retrieval workers, embedding pipelines, and any AI-adjacent component that needs a real Python runtime with CUDA-free models or a packaged model artifact.
+- Anything where the team wants the container discipline of immutable images and per-service IAM without taking on node operations.
 
-- container packaging
-- long-running services
-- explicit resource sizing
-- simpler operations than managing EC2-backed container clusters
+The places Fargate stops being the right answer:
 
-Examples:
+- GPU workloads. As of this writing Fargate doesn't do GPUs; if you need them, you're on EC2-backed ECS, EKS with GPU nodes, or SageMaker.
+- Workloads that benefit from local disk in serious quantity — Fargate ephemeral storage exists but isn't cheap or fast at scale.
+- Anything that genuinely needs daemonset-style sidecars across every host, which Fargate's per-task model doesn't fit.
 
-- internal microservices
-- retrieval workers
-- background processors
-- APIs with non-trivial runtime dependencies
+Cost-wise, Fargate's per-vCPU-hour is meaningfully higher than equivalent EC2. The break-even with self-managed EC2-on-ECS is usually around the point you're keeping containers running 24/7 and have headcount to operate the node fleet. For most teams under maybe 30-40 services, Fargate wins on total cost of ownership even though it loses on the line-item bill.
 
-Fargate is also a good fit when a team wants the discipline of containers without the full operational surface area of Kubernetes nodes.
+## Kubernetes (EKS): the right answer when the problem is platform, not service
 
-## When I Like Kubernetes or EKS
+I'll say this directly: most teams that adopted EKS in the last few years didn't need EKS. They needed Fargate or App Runner with a CI pipeline.
 
-I like Kubernetes when the problem is platform consistency across many workloads, not just deployment of one service.
+EKS is the right answer when:
 
-That usually means:
+- You're supporting many teams with many services, and the value of one consistent deploy primitive across all of them is meaningful.
+- You actually use the policy and networking surface — admission controllers, service mesh, fine-grained network policy, GitOps-style fleet management.
+- You have workloads that genuinely benefit from co-scheduling on shared hosts (GPU sharing, daemonset-style observability, sidecars-everywhere patterns).
+- There's a platform team whose job is to operate the cluster, not "the on-call rotation does it on the side."
 
-- multiple teams
-- deployment policy requirements
-- shared operational patterns
-- standardized service and workload primitives
+When it's wrong:
 
-If I only have one or two services, Kubernetes is often too much. If I am building a platform that many services will live on, it starts making more sense.
+- You have three services. Each of them could be a Fargate task and you'd have one less full-time job to do.
+- The team is using Kubernetes primitives at the level of "we have Deployments and Services" and nothing else. That's the Fargate feature set with a node fleet attached.
+- You're paying a platform team to make Kubernetes look like Heroku for your application developers. At that point you might as well use the thing that already looks like Heroku.
 
-## AI Systems Add New Selection Pressure
+EKS-on-Fargate is its own specific middle ground — Kubernetes API surface without managing nodes. It's a real option when you want pod-level abstractions but not the node operational load. The constraints are documented (no daemonsets, no GPUs, no privileged containers, no EBS volume attachment); if you can live inside those, it's worth a serious look.
 
-AI products change the decision a little because workload cost is more uneven.
+## Where AI workloads change the calculation
 
-I care about:
+AI changes two things about this decision. First, cost variance per request is much wider — a single inference call can be 100× the cost of a normal API call, and the pricing model on Lambda/Fargate (provisioned compute time) doesn't track that variance well. Second, you're often calling an external model, which means your local compute is mostly orchestrating and waiting on I/O.
 
-- request variance
-- token volume
-- external model latency
-- whether tasks can be split into event-driven stages
+The pattern I keep arriving at:
 
-A common pattern I like is mixing compute models:
+- Lambda for the ingestion edges — webhooks, S3 triggers, scheduled syncs that pull data in.
+- Fargate for the API layer that does the LLM orchestration. It's holding connections, managing streaming responses, handling retries, and shouldn't be cold-starting per request.
+- Fargate or Batch for heavy offline jobs — backfills, evals, training-data prep.
+- EKS only when "platform" is the actual problem, usually around the point a team is operating shared GPU infrastructure for multiple workloads.
 
-```ts
-const architecture = {
-  ingestion: 'Lambda',
-  apiLayer: 'Fargate',
-  heavyOfflineJobs: 'Fargate or Batch',
-  sharedPlatform: 'EKS when platform complexity is justified',
-}
-```
+Most AI products I've worked on land on Lambda + Fargate + an external model provider, and the architecture diagram fits on one page. That's a good sign.
 
-That is often better than trying to force the whole system into one compute abstraction.
+## The single best filter I apply
 
-## The Selection Questions I Actually Ask
+The question that has caught the most wrong answers, including some of my own, is this: **do I need these Kubernetes features, or do I just think they sound mature?**
 
-These questions are usually enough:
-
-- Does this need to run for more than 15 minutes?
-- Is container control important?
-- Is the traffic bursty enough that pay-per-invocation is a big win?
-- Is this one service, or a growing platform surface?
-- Do I need Kubernetes features, or do I just think they sound mature?
-
-That last question saves a lot of pain.
-
-## My Bias
-
-My default bias is toward the simplest abstraction that still fits the workload.
-
-I would rather explain clearly why a system uses Lambda plus Fargate than explain why a small product needed a full Kubernetes platform on day one.
-
-Good architecture is usually not about picking the fanciest service. It is about choosing the one whose failure modes your team can actually operate.
+Mature isn't a feature. Operating something your team can actually debug at 3 AM is a feature. Pick the abstraction whose failure modes you're willing to own, and the rest of the decision tends to clarify itself.
